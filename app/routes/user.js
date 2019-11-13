@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('koa-jwt')
 const Router = require('koa-router')
 const router = new Router({ prefix: '/user' })
 const { 
@@ -12,17 +12,20 @@ const {
 }  = require('../controllers/user')
 const { secret } = require('../config')
 
-const auth = async(ctx, next) => {
-  const { authorization = '' } = ctx.request.header;
-  const token = authorization.replace('Bearer ', '');
-  try {
-    const user = jwt.verify(token, secret);
-    ctx.state.user = user;
-  } catch (error) {
-    ctx.throw(401, error.message)
-  }
-  await next()
-}
+// 自己实现的鉴权中间价
+// const auth = async(ctx, next) => {
+//   const { authorization = '' } = ctx.request.header;
+//   const token = authorization.replace('Bearer ', '');
+//   try {
+//     const user = jwt.verify(token, secret);
+//     ctx.state.user = user;
+//   } catch (error) {
+//     ctx.throw(401, error.message)
+//   }
+//   await next()
+// }
+
+const auth = jwt({ secret })
 
 router.get('/', auth, findAll)
 
