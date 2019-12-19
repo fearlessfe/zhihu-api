@@ -2,17 +2,28 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/user')
 const { secret } = require('../config')
 
+const populateMap = {
+  'employments': 'employments.company employments.job',
+  'educations': 'educations.school educations.major'
+}
 class UserController {
   async findAll(ctx) {
-    ctx.body = await User.find();
+    const { per_page = 10 } = ctx.query;
+    const page = Math.max(ctx.query.page * 1, 1) - 1;
+    const perPage = Math.max(per_page * 1, 1);
+    ctx.body = await User
+      .find({name: new RegExp(ctx.query.q, 'i')})
+      .limit(perPage)
+      .skip(page*perPage);
   }
   async findById(ctx) {
-    const { fields } = ctx.query;
-    let selectFields;
-    if (fields) {
-      selectFields = fields.split(';').filter(f => f).map(f => ' +' + f).join('');
-    }
-    const user = await User.findById(ctx.params.id).select(selectFields);
+    const { fields = '' } = ctx.query;
+    const selectFields = fields.split(';').filter(f => f).map(f => ' +' + f).join('');
+    const populateStr = fields.split(';').filter(f => f).map(f => {
+      return populateMap[f] ? populateMap[f] : f
+    }).join(' ');
+    const user = await User.findById(ctx.params.id).select(selectFields)
+      .populate(populateStr);
     if (!user) ctx.throw(404, '用户不存在')
     ctx.body = user;
   }
@@ -98,6 +109,32 @@ class UserController {
     // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
     if(index > -1){
       me.following.splice(index, 1);
+      me.save();
+    }
+    ctx.status = 204;
+  }
+  async listFollowingTopic(ctx) {
+    const user = await User.findById(ctx.params.id).select('+followingTopic').populate('followingTopic');
+    if(!user) {
+      ctx.throw(404, '用户不存在');
+    }
+    ctx.body = user.followingTopic;
+  }
+  async followTopic(ctx){
+    const me = await User.findById(ctx.state.user._id).select('+followingTopic')
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(!me.followingTopic.map(id => id.toString()).includes(ctx.params.id)){
+      me.followingTopic.push(ctx.params.id);
+      me.save();
+    }
+    ctx.status = 204;
+  }
+  async unfollowTopic(ctx){
+    const me = await User.findById(ctx.state.user._id).select('+followingTopic')
+    const index = me.followingTopic.map(id => id.toString()).indexOf(ctx.params.id)
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(index > -1){
+      me.followingTopic.splice(index, 1);
       me.save();
     }
     ctx.status = 204;

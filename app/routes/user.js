@@ -13,8 +13,12 @@ const {
   listFollowers,
   listFollowing,
   follow,
-  unfollow
+  unfollow,
+  listFollowingTopic,
+  followTopic,
+  unfollowTopic
 }  = require('../controllers/user')
+const { checkTopicExist } = require('../controllers/topic')
 const { secret } = require('../config')
 
 // 自己实现的鉴权中间价
@@ -51,5 +55,11 @@ router.get('/:id/following', listFollowing);
 router.put('/following/:id', auth, checkUserExist, follow);
 
 router.delete('/unfollowing/:id', auth, checkUserExist, unfollow);
+
+router.get('/:id/followingTopic', listFollowingTopic);
+
+router.put('/followingTopic/:id', auth, checkTopicExist, followTopic);
+
+router.delete('/unfollowingTopic/:id', auth, checkTopicExist, unfollowTopic);
 
 module.exports = router;
