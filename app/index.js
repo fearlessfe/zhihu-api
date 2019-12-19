@@ -9,7 +9,7 @@ const koaStatic = require('koa-static')
 const { connectionStr } = require('./config')
 const routing = require('./routes')
 
-mongoose.connect(connectionStr, { useUnifiedTopology: true }, () => {
+mongoose.connect(connectionStr, { useUnifiedTopology: true, useNewUrlParser: true }, () => {
   console.log('MongoDB 连接成功了')
 })
 mongoose.connection.on('error', console.error)

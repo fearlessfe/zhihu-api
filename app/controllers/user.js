@@ -7,7 +7,12 @@ class UserController {
     ctx.body = await User.find();
   }
   async findById(ctx) {
-    const user = await User.findById(ctx.params.id);
+    const { fields } = ctx.query;
+    let selectFields;
+    if (fields) {
+      selectFields = fields.split(';').filter(f => f).map(f => ' +' + f).join('');
+    }
+    const user = await User.findById(ctx.params.id).select(selectFields);
     if (!user) ctx.throw(404, '用户不存在')
     ctx.body = user;
   }
@@ -59,6 +64,43 @@ class UserController {
     const {_id, name} = user;
     const token = jwt.sign({_id, name}, secret, {expiresIn: '1d'});
     ctx.body = {token}
+  }
+  async checkUserExist(ctx, next) {
+    const user = await User.findById(ctx.params.id);
+    if(!user){
+      ctx.throw(404, '用户不存在');
+    }
+    await next();
+  }
+  async listFollowers(ctx) {
+    const users = await User.find({ following: ctx.params.id })
+    ctx.body = users;
+  }
+  async listFollowing(ctx) {
+    const user = await User.findById(ctx.params.id).select('+following').populate('following');
+    if(!user) {
+      ctx.throw(404);
+    }
+    ctx.body = user.following;
+  }
+  async follow(ctx){
+    const me = await User.findById(ctx.state.user._id).select('+following')
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(!me.following.map(id => id.toString()).includes(ctx.params.id)){
+      me.following.push(ctx.params.id);
+      me.save();
+    }
+    ctx.status = 204;
+  }
+  async unfollow(ctx){
+    const me = await User.findById(ctx.state.user._id).select('+following')
+    const index = me.following.map(id => id.toString()).indexOf(ctx.params.id)
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(index > -1){
+      me.following.splice(index, 1);
+      me.save();
+    }
+    ctx.status = 204;
   }
 }
 
