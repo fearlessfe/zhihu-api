@@ -1,5 +1,6 @@
 const Topic = require('../models/topic')
 const User = require('../models/user')
+const Question = require('../models/question')
 class TopicController {
   async find(ctx) {
     const { per_page = 10 } = ctx.query;
@@ -44,6 +45,10 @@ class TopicController {
   async listTopicFollowers(ctx) {
     const users = await User.find({ followingTopic: ctx.params.id })
     ctx.body = users;
+  }
+  async listTopicQuestions(ctx) {
+    const questions = await Question.find({ topics: ctx.params.id });
+    ctx.body = questions;
   }
 }
 
