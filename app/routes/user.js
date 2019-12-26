@@ -17,9 +17,20 @@ const {
   listFollowingTopic,
   followTopic,
   unfollowTopic,
-  listQuestions
+  listQuestions,
+  listLikingAnswers,
+  likeAnswer,
+  unlikeAnswer,
+  listDislikingAnswers,
+  dislikeAnswer,
+  undislikeAnswer,
+  listCollectingAnswers,
+  collectingAnswer,
+  uncollectingAnswer
 }  = require('../controllers/user')
 const { checkTopicExist } = require('../controllers/topic')
+const { checkAnswerExist } = require('../controllers/answer')
+
 const { secret } = require('../config')
 
 // 自己实现的鉴权中间价
@@ -64,5 +75,23 @@ router.put('/followingTopic/:id', auth, checkTopicExist, followTopic);
 router.delete('/unfollowingTopic/:id', auth, checkTopicExist, unfollowTopic);
 
 router.get('/:id/questions', listQuestions);
+
+router.get('/:id/likingAnswer', listLikingAnswers);
+
+router.put('/likingAnswer/:id', auth, checkAnswerExist, likeAnswer, undislikeAnswer);
+
+router.delete('/unlikingAnswer/:id', auth, checkAnswerExist, unlikeAnswer);
+
+router.get('/:id/dislikingAnswer', listDislikingAnswers);
+
+router.put('/dislikingAnswer/:id', auth, checkAnswerExist, dislikeAnswer, unlikeAnswer);
+
+router.delete('/undislikingAnswer/:id', auth, checkAnswerExist, undislikeAnswer);
+
+router.get('/:id/collectingAnswer', listCollectingAnswers);
+
+router.put('/collectingAnswer/:id', auth, checkAnswerExist, collectingAnswer);
+
+router.delete('/uncollectingAnswer/:id', auth, checkAnswerExist, uncollectingAnswer);
 
 module.exports = router;

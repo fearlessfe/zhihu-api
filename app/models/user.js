@@ -36,6 +36,18 @@ const userSchema = new Schema({
   followingTopic: {
     type: [{ type: Schema.Types.ObjectId, ref: 'Topic' }],
     select: false
+  },
+  likingAnswer: {
+    type: [{ type: Schema.Types.ObjectId, ref: 'Answer' }],
+    select: false
+  },
+  unlikingAnswer: {
+    type: [{ type: Schema.Types.ObjectId, ref: 'Answer' }],
+    select: false
+  },
+  collectingAnswer: {
+    type: [{ type: Schema.Types.ObjectId, ref: 'Answer' }],
+    select: false
   }
 })
 

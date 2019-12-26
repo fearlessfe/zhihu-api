@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/user')
 const Question = require('../models/question')
+const Answer = require('../models/answer')
 
 const { secret } = require('../config')
 
@@ -144,6 +145,89 @@ class UserController {
   async listQuestions(ctx) {
     const questions = await Question.find({ questioner: ctx.params.id });
     ctx.body = questions;
+  }
+  async listLikingAnswers(ctx) {
+    const user = await User.findById(ctx.params.id).select('+likingAnswer').populate('likingAnswer');
+    if(!user) {
+      ctx.throw(404, '用户不存在');
+    }
+    ctx.body = user.likingAnswer;
+  }
+  async likeAnswer(ctx, next){
+    const me = await User.findById(ctx.state.user._id).select('+likingAnswer')
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(!me.likingAnswer.map(id => id.toString()).includes(ctx.params.id)){
+      me.likingAnswer.push(ctx.params.id);
+      me.save();
+      await Answer.findByIdAndUpdate(ctx.params.id, { $inc: { voteCount: 1 } })
+    }
+    ctx.status = 204;
+    await next();
+  }
+  async unlikeAnswer(ctx){
+    const me = await User.findById(ctx.state.user._id).select('+likingAnswer')
+    const index = me.likingAnswer.map(id => id.toString()).indexOf(ctx.params.id)
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(index > -1){
+      me.likingAnswer.splice(index, 1);
+      me.save();
+      await Answer.findByIdAndUpdate(ctx.params.id, { $inc: { voteCount: -1 } })
+    }
+    ctx.status = 204;
+  }
+  async listDislikingAnswers(ctx) {
+    const user = await User.findById(ctx.params.id).select('+unlikingAnswer').populate('unlikingAnswer');
+    if(!user) {
+      ctx.throw(404, '用户不存在');
+    }
+    ctx.body = user.unlikingAnswer;
+  }
+  async dislikeAnswer(ctx, next){
+    const me = await User.findById(ctx.state.user._id).select('+unlikingAnswer')
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(!me.unlikingAnswer.map(id => id.toString()).includes(ctx.params.id)){
+      me.unlikingAnswer.push(ctx.params.id);
+      me.save();
+    }
+    ctx.status = 204;
+    await next();
+  }
+  async undislikeAnswer(ctx){
+    const me = await User.findById(ctx.state.user._id).select('+unlikingAnswer')
+    const index = me.unlikingAnswer.map(id => id.toString()).indexOf(ctx.params.id)
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(index > -1){
+      me.unlikingAnswer.splice(index, 1);
+      me.save();
+    }
+    ctx.status = 204;
+  }
+  async listCollectingAnswers(ctx) {
+    const user = await User.findById(ctx.params.id).select('+collectingAnswer').populate('collectingAnswer');
+    if(!user) {
+      ctx.throw(404, '用户不存在');
+    }
+    ctx.body = user.collectingAnswer;
+  }
+  async collectingAnswer(ctx, next){
+    const me = await User.findById(ctx.state.user._id).select('+collectingAnswer')
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(!me.collectingAnswer.map(id => id.toString()).includes(ctx.params.id)){
+      me.collectingAnswer.push(ctx.params.id);
+      me.save();
+    }
+    ctx.status = 204;
+    await next();
+  }
+  async uncollectingAnswer(ctx){
+    const me = await User.findById(ctx.state.user._id).select('+collectingAnswer')
+    const index = me.collectingAnswer.map(id => id.toString()).indexOf(ctx.params.id)
+    // mogodb中自带的id无法直接与字符串做比较，需要先转为字符串
+    if(index > -1){
+      me.collectingAnswer.splice(index, 1);
+      me.save();
+    }
+    ctx.status = 204;
   }
 }
 
